@@ -20,7 +20,7 @@ def plot_digit(img):
 
 def plot_latent(encoder, dataset, posterior=(0,1), scale_radius=1, n_sample=1000):
     mean, std_deviation = posterior
-    plt.figure()
+    plt.figure(figsize=(10,10))
 
     # plot MAP parameter latent
     vector_to_parameters(mean, encoder.parameters())
@@ -54,7 +54,7 @@ def plot_latent(encoder, dataset, posterior=(0,1), scale_radius=1, n_sample=1000
 def plot_fancy_latent(encoder, batch):
     latent = encoder(batch).detach().numpy()
     zoom = 2
-    fig, ax = plt.subplots(figsize=(16,10))
+    fig, ax = plt.subplots(figsize=(10,10))
     for i,image in enumerate(batch):
         im = OffsetImage(image[0], zoom=zoom)
         ab = AnnotationBbox(im, (latent[i][0], latent[i][1]), xycoords='data', frameon=False)
@@ -64,7 +64,7 @@ def plot_fancy_latent(encoder, batch):
     plt.title('Latent space')
 
 
-def plot_reconstruction(model, dataset, posterior=(0,1), data_idx=0, n_sample=1000):
+def plot_reconstruction(model, dataset, posterior=(0,1), data_idx=0, n_sample=1000, apply_softmax=False):
     mean, std_deviation = posterior
     plt.figure(figsize=(15,3))
 
@@ -75,33 +75,40 @@ def plot_reconstruction(model, dataset, posterior=(0,1), data_idx=0, n_sample=10
 
     # compute MAP parameter predictions
     vector_to_parameters(mean, model.parameters())
-    logits = model(dataset)
-    exp_logits = torch.exp(logits)
-    softmax_probs = exp_logits / (1 + exp_logits)
+    if apply_softmax:
+        logits = model(dataset)
+        exp_logits = torch.exp(logits)
+        predictions = exp_logits / (1 + exp_logits)
+    else:
+        predictions = model(dataset)
     ax = plt.subplot(1, 4, 2)
-    plt.imshow(softmax_probs[data_idx][0].detach().numpy())
+    plt.imshow(predictions[data_idx][0].detach().numpy())
     ax.title.set_text('MAP prediction')
 
     # plot statistics (mean and std) of prediction of samples following the posterior
-    softmax_probs_list = []
+    predictions_list = []
     sampler = DiagLaplace()
     samples = sampler.sample(mean, std_deviation, n_samples=n_sample)
     for parameter in samples:
         vector_to_parameters(parameter, model.parameters())
-        logits = model(dataset)
-        exp_logits = torch.exp(logits)
-        softmax_probs = exp_logits / (1 + exp_logits)
-        softmax_probs_list.append(softmax_probs)
-    softmax_probs_list = torch.stack(softmax_probs_list,dim=0)
+        if apply_softmax:
+            logits = model(dataset)
+            exp_logits = torch.exp(logits)
+            softmax_probs = exp_logits / (1 + exp_logits)
+            predictions_list.append(softmax_probs)
+        else:
+            predictions = model(dataset)
+            predictions_list.append(predictions)
+    predictions_list = torch.stack(predictions_list,dim=0)
     ax = plt.subplot(1, 4, 3)
-    plt.imshow(torch.mean(softmax_probs_list, dim=0)[data_idx][0].detach().numpy())
+    plt.imshow(torch.mean(predictions_list, dim=0)[data_idx][0].detach().numpy())
     ax.title.set_text('Predictions mean')
     ax = plt.subplot(1, 4, 4)
-    plt.imshow(torch.std(softmax_probs_list, dim=0)[data_idx][0].detach().numpy())
+    plt.imshow(torch.std(predictions_list, dim=0)[data_idx][0].detach().numpy())
     ax.title.set_text('Predictions std')
 
 
-def plot_reconstruction_with_latent(model, dataset, posterior=(0,1), data_idx=0, scale_radius=1, n_sample=1000):
+def plot_reconstruction_with_latent(model, dataset, posterior=(0,1), data_idx=0, scale_radius=1, n_sample=1000, apply_softmax=False):
     mean, std_deviation = posterior
     plt.figure(figsize=(15,3))
 
@@ -141,29 +148,36 @@ def plot_reconstruction_with_latent(model, dataset, posterior=(0,1), data_idx=0,
 
     # compute MAP parameter predictions
     vector_to_parameters(mean, model.parameters())
-    logits = model(dataset)
-    exp_logits = torch.exp(logits)
-    softmax_probs = exp_logits / (1 + exp_logits)
+    if apply_softmax:
+        logits = model(dataset)
+        exp_logits = torch.exp(logits)
+        predictions = exp_logits / (1 + exp_logits)
+    else:
+        predictions = model(dataset)
     ax = plt.subplot(1, 5, 3)
-    plt.imshow(softmax_probs[data_idx][0].detach().numpy())
+    plt.imshow(predictions[data_idx][0].detach().numpy())
     ax.title.set_text('MAP prediction')
 
     # plot statistics (mean and std) of prediction of samples following the posterior
-    softmax_probs_list = []
+    predictions_list = []
     sampler = DiagLaplace()
     samples = sampler.sample(mean, std_deviation, n_samples=n_sample)
     for parameter in samples:
         vector_to_parameters(parameter, model.parameters())
-        logits = model(dataset)
-        exp_logits = torch.exp(logits)
-        softmax_probs = exp_logits / (1 + exp_logits)
-        softmax_probs_list.append(softmax_probs)
-    softmax_probs_list = torch.stack(softmax_probs_list,dim=0)
+        if apply_softmax:
+            logits = model(dataset)
+            exp_logits = torch.exp(logits)
+            softmax_probs = exp_logits / (1 + exp_logits)
+            predictions_list.append(softmax_probs)
+        else:
+            predictions = model(dataset)
+            predictions_list.append(predictions)
+    predictions_list = torch.stack(predictions_list,dim=0)
     ax = plt.subplot(1, 5, 4)
-    plt.imshow(torch.mean(softmax_probs_list, dim=0)[data_idx][0].detach().numpy())
+    plt.imshow(torch.mean(predictions_list, dim=0)[data_idx][0].detach().numpy())
     ax.title.set_text('Predictions mean')
     ax = plt.subplot(1, 5, 5)
-    plt.imshow(torch.std(softmax_probs_list, dim=0)[data_idx][0].detach().numpy())
+    plt.imshow(torch.std(predictions_list, dim=0)[data_idx][0].detach().numpy())
     ax.title.set_text('Predictions std')
 
 
