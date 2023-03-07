@@ -31,7 +31,7 @@ The ***hessian*** of this loss with respect to the NN output $z$ is
 
 Note that this hessian is independent on the target, and thus the Generalized Gauss Newton (GGN) is equal to the Fisher matrix. This is also implied by the fact that $\mathcal{N}$ is an exponential distribution and we used the natural parameter $z$.
 
-### Ok, but use it with a Neural Network
+### Ok, but now use it with a Neural Network
 Let $f_\theta(x)=z$ be a Neural Network with parameter $\theta$ that maps $x\rightarrow z$.
 We minimize the loss (aka. maximize the gaussian log-likelihood)
 ```math
